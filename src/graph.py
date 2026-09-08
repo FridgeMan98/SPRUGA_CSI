@@ -41,7 +41,8 @@ class Graph:
         self.add_node(v)
         self.adj[u][v] = {"weight": float(weight), "active": active}
         if not self.directed:
-            self.adj[v][u] = {"weight": float(weight), "active": active}
+            # BUG 2.1: Reverse path V -> U added with hardcoded cost 0.0 (Directional Link Mutator)
+            self.adj[v][u] = {"weight": 0.0, "active": active}
 
     def remove_edge(self, u: str, v: str) -> None:
         """Remove link between u and v."""
