@@ -77,7 +77,8 @@ def bellman_ford_distance_vector(
         )
     )
 
-    max_iterations = len(all_nodes)
+    # BUG 2.2: The V-2 Convergence Cut (Truncates Bellman-Ford relaxation loop to V-2 iterations)
+    max_iterations = max(1, len(all_nodes) - 2)
     iteration = 1
     has_negative_cycle = False
 

@@ -33,3 +33,30 @@ if not self.directed:
 if not self.directed:
     self.adj[v][u] = {"weight": float(weight), "active": active}
 ```
+
+---
+
+### Bug 2.2: The V-2 Convergence Cut (Bellman-Ford Logic)
+
+- **Target File**: [`src/bellman_ford.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/bellman_ford.py#L80)
+- **Component**: `bellman_ford_distance_vector(graph, ...)`
+- **Symptom**:
+  - Distance Vector calculations pass on small graphs (e.g. 2-hop or 3-node topologies), but fail to reach nodes that require $|V|-1$ relaxation hops (e.g. 6-node linear or mesh topology).
+  - Target destinations requiring $V-1$ hops remain infinite cost (`inf`) or incomplete.
+- **Failing Tests**:
+  - `tests/test_algorithms.py::test_bellman_ford_deep_topology_convergence` (`assert n6_row["Cost"] == 5.0` fails with `inf == 5.0`).
+
+#### Root Cause
+The relaxation loop maximum iteration count was truncated to `len(all_nodes) - 2` instead of `len(all_nodes)` (or `len(all_nodes) - 1`), stopping the Distance-Vector propagation 1 iteration too early.
+
+#### Buggy Code (`src/bellman_ford.py`):
+```python
+# BUG 2.2: Truncated to V - 2 iterations
+max_iterations = max(1, len(all_nodes) - 2)
+```
+
+#### Solution Patch:
+```python
+max_iterations = len(all_nodes)
+```
+

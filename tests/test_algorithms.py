@@ -63,3 +63,18 @@ def test_bellman_ford_explicit_routing_table(sample_network):
     assert d_row["Next Hop"] == "C"
     assert d_row["Cost"] == 8.0
     assert d_row["Path"] == ["A", "C", "B", "D"]
+
+
+def test_bellman_ford_deep_topology_convergence():
+    """Verify Bellman-Ford converges on deep topologies requiring V-1 iterations."""
+    g = Graph(directed=False)
+    # 6-node linear chain: N1 - N2 - N3 - N4 - N5 - N6
+    nodes = ["N1", "N2", "N3", "N4", "N5", "N6"]
+    for i in range(len(nodes) - 1):
+        g.add_edge(nodes[i], nodes[i + 1], weight=1.0)
+
+    routing_table = bellman_ford(g, "N1")
+    n6_row = next(r for r in routing_table if r["Destination"] == "N6")
+    assert n6_row["Cost"] == 5.0
+    assert n6_row["Path"] == ["N1", "N2", "N3", "N4", "N5", "N6"]
+
