@@ -25,3 +25,11 @@ def test_link_disable_and_enable():
 
     g.set_edge_active("A", "B", True)
     assert g.get_neighbors("A", active_only=True)["B"] == 3.0
+
+
+def test_floating_point_metric_precision():
+    """Verify link metric calculation precision under floating point arithmetic."""
+    from src.graph import compute_composite_metric
+    metric = compute_composite_metric(0.1, 5.0)
+    assert metric == 0.3, f"Expected exact metric 0.3, but got floating-point drift value {metric}!"
+

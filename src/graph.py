@@ -119,6 +119,19 @@ class Graph:
                 new_g.adj[u][v] = dict(data)
         return new_g
 
+    def add_composite_edge(self, u: str, v: str, delay: float, bandwidth: float) -> None:
+        """Add edge using composite metric W = delay + (1 / bandwidth)."""
+        w = compute_composite_metric(delay, bandwidth)
+        self.add_edge(u, v, weight=w)
+
+
+def compute_composite_metric(delay: float, bandwidth: float) -> float:
+    """Calculate composite link weight metric W = delay + (1 / bandwidth)."""
+    if bandwidth <= 0:
+        return float("inf")
+    # BUG 3.2: Floating-Point Metric Imprecision (Omitted explicit rounding round(..., 6))
+    return delay + (1.0 / bandwidth)
+
 
 # Alias for backward compatibility
 NetworkGraph = Graph

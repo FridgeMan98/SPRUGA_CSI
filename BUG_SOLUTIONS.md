@@ -148,5 +148,37 @@ while not pq.is_empty():
     visited.add(u)
 ```
 
+---
+
+### Bug 3.2: Floating-Point Metric Imprecision [Difficulty: ⭐⭐⭐⭐ Medium-Hard]
+
+- **Target File**: [`src/graph.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/graph.py#L126-L132)
+- **Component**: `compute_composite_metric(delay, bandwidth)`
+- **Symptom**:
+  - Link metric calculation $W = \text{delay} + \frac{1}{\text{bandwidth}}$ fails exact floating-point equality comparisons due to IEEE-754 binary representation drift (e.g. `0.1 + 0.2 = 0.30000000000000004 != 0.3`).
+- **Failing Tests**:
+  - `tests/test_graph.py::test_floating_point_metric_precision` (`AssertionError: Expected exact metric 0.3, but got floating-point drift value 0.30000000000000004!`).
+
+#### Root Cause
+`compute_composite_metric()` returns raw floating-point sum `delay + (1.0 / bandwidth)` without applying explicit rounding (`round(..., 6)` or `math.isclose()` tolerance checking).
+
+#### Buggy Code (`src/graph.py`):
+```python
+def compute_composite_metric(delay: float, bandwidth: float) -> float:
+    if bandwidth <= 0:
+        return float("inf")
+    # BUG 3.2: Omitted explicit rounding / tolerance check
+    return delay + (1.0 / bandwidth)
+```
+
+#### Solution Patch:
+```python
+def compute_composite_metric(delay: float, bandwidth: float, precision: int = 6) -> float:
+    if bandwidth <= 0:
+        return float("inf")
+    return round(delay + (1.0 / bandwidth), precision)
+```
+
+
 
 
