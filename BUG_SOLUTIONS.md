@@ -1,12 +1,22 @@
 # ForkThis Master Bug Inventory & Solution Guide
 
-This document tracks all intentional bugs injected for the **ForkThis** event, including location, symptoms, failure behavior, and exact solutions.
+This document tracks all intentional bugs injected for the **ForkThis** event, including location, symptoms, failure behavior, difficulty ratings, and exact solutions.
+
+### 📊 Bug Difficulty Ranking Table
+
+| Rank | Bug ID & Name | Difficulty Rating | Star Rating |
+| :--- | :--- | :--- | :--- |
+| **1** | **2.2 V-2 Convergence Cut** | Easy | ⭐ |
+| **2** | **2.1 Directional Link Mutator** | Easy | ⭐⭐ |
+| **3** | **3.1 Stale Heap Priority Key** | Medium | ⭐⭐⭐ |
+| **4** | **3.2 Floating-Point Imprecision** | Medium-Hard | ⭐⭐⭐⭐ |
+| **5** | **2.3 Mutable State Persistence** | Hard | ⭐⭐⭐⭐⭐ |
 
 ---
 
 ## Tier 2: Silent Logic Bugs
 
-### Bug 2.1: Directional Link Mutator (Graph Logic)
+### Bug 2.1: Directional Link Mutator (Graph Logic) [Difficulty: ⭐⭐ Easy]
 
 - **Target File**: [`src/graph.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/graph.py#L38-L45)
 - **Component**: `Graph.add_edge(u, v, weight)`
