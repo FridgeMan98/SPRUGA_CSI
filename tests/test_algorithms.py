@@ -78,3 +78,18 @@ def test_bellman_ford_deep_topology_convergence():
     assert n6_row["Cost"] == 5.0
     assert n6_row["Path"] == ["N1", "N2", "N3", "N4", "N5", "N6"]
 
+
+def test_dijkstra_stale_heap_key():
+    """Verify Dijkstra ignores stale priority queue keys on redundant path graphs."""
+    g = Graph(directed=True)
+    g.add_edge("A", "B", weight=10.0)
+    g.add_edge("A", "C", weight=2.0)
+    g.add_edge("C", "B", weight=1.0)
+    g.add_edge("B", "D", weight=1.0)
+
+    routing_table = dijkstra(g, "A")
+    b_row = next(r for r in routing_table if r["Destination"] == "B")
+    assert b_row["Cost"] == 3.0, f"Expected cost 3.0 for router B, but got {b_row['Cost']} due to stale heap entry processing!"
+
+
+

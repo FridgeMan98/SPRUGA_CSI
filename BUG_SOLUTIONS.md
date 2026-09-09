@@ -104,4 +104,39 @@ def create_sample_mesh() -> Graph:
     return g
 ```
 
+---
+
+## Tier 3: Edge-Case System Bugs
+
+### Bug 3.1: Stale Heap Priority Key (Dijkstra Logic)
+
+- **Target File**: [`src/dijkstra.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/dijkstra.py#L148-L155)
+- **Component**: `dijkstra_trace(graph, source)`
+- **Symptom**:
+  - When redundant paths exist in a network topology, popped priority queue elements with higher (stale) costs are processed instead of being ignored.
+  - Stale heap entries overwrite shortest router costs with larger path weights (e.g. router cost `10.0` instead of `3.0`).
+- **Failing Tests**:
+  - `tests/test_algorithms.py::test_dijkstra_stale_heap_key` (`AssertionError: Expected cost 3.0 for router B, but got 10.0 due to stale heap entry processing!`).
+
+#### Root Cause
+In `dijkstra_trace()`, after popping `(cost, u)` from the priority queue, the algorithm fails to check `if cost > distances[u]: continue` (or `if u in visited: continue`) before processing node `u`, causing stale popped costs to overwrite previously established shorter distances.
+
+#### Buggy Code (`src/dijkstra.py`):
+```python
+while not pq.is_empty():
+    cost, u = pq.pop()
+    # BUG 3.1: Omitted check if cost > distances[u] or u in visited
+    distances[u] = cost
+```
+
+#### Solution Patch:
+```python
+while not pq.is_empty():
+    cost, u = pq.pop()
+    if u in visited or cost > distances[u]:
+        continue
+    visited.add(u)
+```
+
+
 
