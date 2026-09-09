@@ -60,3 +60,48 @@ max_iterations = max(1, len(all_nodes) - 2)
 max_iterations = len(all_nodes)
 ```
 
+---
+
+### Bug 2.3: Mutable State Persistence (Streamlit State Bug)
+
+- **Target File**: [`app.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/app.py#L54-L71)
+- **Component**: Preset Topology Instantiation (`create_sample_mesh()`)
+- **Symptom**:
+  - In the Streamlit UI, modifying or severing a link mutates the global graph instance in memory.
+  - When clicking "Reset Graph" or re-loading the topology, the severed links remain broken permanently across session resets.
+- **Failing Tests**:
+  - `tests/test_simulator.py::test_topology_reset_state_isolation` (`AssertionError: Resetting topology must return a fresh, unmutated graph!`).
+
+#### Root Cause
+`create_sample_mesh()` returns a reference to a single, shared global instance `SHARED_SAMPLE_MESH` instead of returning a newly constructed `Graph` instance or `.copy()`.
+
+#### Buggy Code (`app.py`):
+```python
+# Shared global mesh graph instance
+SHARED_SAMPLE_MESH = Graph(directed=False)
+...
+
+def create_sample_mesh() -> Graph:
+    # BUG 2.3: Returns shared mutable global instance
+    return SHARED_SAMPLE_MESH
+```
+
+#### Solution Patch:
+```python
+def create_sample_mesh() -> Graph:
+    g = Graph(directed=False)
+    edges = [
+        ("Router_A", "Router_B", 4.0),
+        ("Router_A", "Router_C", 2.0),
+        ("Router_B", "Router_C", 1.0),
+        ("Router_B", "Router_D", 5.0),
+        ("Router_C", "Router_D", 8.0),
+        ("Router_C", "Router_E", 10.0),
+        ("Router_D", "Router_E", 2.0),
+    ]
+    for u, v, w in edges:
+        g.add_edge(u, v, weight=w)
+    return g
+```
+
+

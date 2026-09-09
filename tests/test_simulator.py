@@ -43,3 +43,14 @@ def test_cost_change_event():
     assert g.get_edge_weight("A", "C") == 1.0
     d_table = result.dijkstra_routing_tables["A"]
     assert d_table.get_entry("C").cost == 1.0
+
+
+def test_topology_reset_state_isolation():
+    from app import create_sample_mesh
+    g1 = create_sample_mesh()
+    g1.set_edge_active("Router_A", "Router_B", False)
+
+    # Reload preset topology (Reset Topology action)
+    g2 = create_sample_mesh()
+    assert g2.is_edge_active("Router_A", "Router_B"), "Resetting topology must return a fresh, unmutated graph!"
+

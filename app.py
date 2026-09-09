@@ -51,20 +51,24 @@ st.caption("Interactive Link-State (OSPF / Dijkstra) & Distance-Vector (RIP / Be
 
 # --- Preset Topologies ---
 
+# Shared global mesh graph instance
+SHARED_SAMPLE_MESH = Graph(directed=False)
+for _u, _v, _w in [
+    ("Router_A", "Router_B", 4.0),
+    ("Router_A", "Router_C", 2.0),
+    ("Router_B", "Router_C", 1.0),
+    ("Router_B", "Router_D", 5.0),
+    ("Router_C", "Router_D", 8.0),
+    ("Router_C", "Router_E", 10.0),
+    ("Router_D", "Router_E", 2.0),
+]:
+    SHARED_SAMPLE_MESH.add_edge(_u, _v, weight=_w)
+
+
 def create_sample_mesh() -> Graph:
-    g = Graph(directed=False)
-    edges = [
-        ("Router_A", "Router_B", 4.0),
-        ("Router_A", "Router_C", 2.0),
-        ("Router_B", "Router_C", 1.0),
-        ("Router_B", "Router_D", 5.0),
-        ("Router_C", "Router_D", 8.0),
-        ("Router_C", "Router_E", 10.0),
-        ("Router_D", "Router_E", 2.0),
-    ]
-    for u, v, w in edges:
-        g.add_edge(u, v, weight=w)
-    return g
+    # BUG 2.3: Mutable State Persistence (Returns mutable global instance directly instead of fresh object)
+    return SHARED_SAMPLE_MESH
+
 
 
 def create_ring_topology() -> Graph:
