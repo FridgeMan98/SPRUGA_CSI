@@ -179,6 +179,33 @@ def compute_composite_metric(delay: float, bandwidth: float, precision: int = 6)
     return round(delay + (1.0 / bandwidth), precision)
 ```
 
+---
+
+## 🔮 Potential Future Bug Candidate Backlog
+
+The following candidate bugs can be introduced in future iterations of the benchmark:
+
+1. **Inactive Node Adjacency Leak (Graph Logic)** [Difficulty: ⭐⭐ Easy]
+   - *Target*: `src/graph.py` $\to$ `get_neighbors(node, active_only=True)`
+   - *Issue*: Checks `is_edge_active(u, v)` but omits `is_node_active(v)`. Disabling a node allows traffic to route through it.
+
+2. **Event Simulator Convergence Counter Skew (Simulator Logic)** [Difficulty: ⭐⭐ Easy]
+   - *Target*: `src/network_simulator/simulator.py` $\to$ `trigger_event()`
+   - *Issue*: Fails to reset `step_count` between events, causing cumulative convergence metrics.
+
+3. **Infinite Path Loop Trap (Path Reconstruction)** [Difficulty: ⭐⭐⭐ Medium]
+   - *Target*: `src/dijkstra.py` $\to$ `reconstruct_path()`
+   - *Issue*: Omits `visited` tracking in predecessor pointer traversal, hanging in infinite loops on circular self-referencing routing tables.
+
+4. **Poison Reverse Horizon Inversion (Bellman-Ford / RIP)** [Difficulty: ⭐⭐⭐⭐ Medium-Hard]
+   - *Target*: `src/bellman_ford.py` $\to$ `bellman_ford_distance_vector()`
+   - *Issue*: When `poison_reverse=True`, advertises cost `0.0` instead of `float("inf")` back to next-hop router.
+
+5. **Multi-Path Equal-Cost Tie-Breaker Bias (Routing Table Logic)** [Difficulty: ⭐⭐⭐ Medium]
+   - *Target*: `src/network_simulator/routing_table.py` $\to$ `update_entry()`
+   - *Issue*: Non-deterministic next-hop updates when equal-cost paths exist.
+
+
 
 
 
