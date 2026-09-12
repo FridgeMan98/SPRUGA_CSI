@@ -66,7 +66,6 @@ for _u, _v, _w in [
 
 
 def create_sample_mesh() -> Graph:
-    # BUG 2.3: Mutable State Persistence (Returns mutable global instance directly instead of fresh object)
     return SHARED_SAMPLE_MESH
 
 

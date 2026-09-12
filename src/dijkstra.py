@@ -148,9 +148,6 @@ def dijkstra_trace(graph: Graph, source: str) -> Tuple[Dict[str, float], Dict[st
 
     while not pq.is_empty():
         cost, u = pq.pop()
-        # BUG 3.1: Stale Heap Priority Key (Omitted check if cost > distances[u])
-        # if cost > distances[u]:
-        #     continue
         distances[u] = cost
 
         visited.add(u)

@@ -2,15 +2,42 @@
 
 This document tracks all intentional bugs injected for the **ForkThis** event, including location, symptoms, failure behavior, difficulty ratings, and exact solutions.
 
+### 🗺️ Visual Diagnostic Flowchart
+
+```mermaid
+graph TD
+    Start["🔍 What symptom or failing test are you observing?"]
+
+    %% Branch 1: App / State
+    Start -->|Reset graph button fails / Test state polluted| Bug23["🧟 Bug 2.3: Mutable State Persistence<br><b>Target:</b> app.py<br><b>Fix:</b> Return new Graph instance, not shared global"]
+
+    %% Branch 2: Graph / Metric
+    Start -->|Reverse link cost returns 0.0| Bug21["🪞 Bug 2.1: Directional Link Mutator<br><b>Target:</b> src/graph.py (add_edge)<br><b>Fix:</b> Set self.adj[v][u] = weight"]
+    Start -->|Metric equals 0.30000000000000004| Bug32["🌊 Bug 3.2: Floating-Point Metric Imprecision<br><b>Target:</b> src/graph.py (metric)<br><b>Fix:</b> Add round(..., 6)"]
+
+    %% Branch 3: Execution / Loop
+    Start -->|Test hangs / Infinite loop in path| Bug42["🐍 Bug 4.2: Infinite Path Loop Trap<br><b>Target:</b> src/dijkstra.py (reconstruct_path)<br><b>Fix:</b> Add visited set guard in while loop"]
+    Start -->|Redundant path gives higher cost| Bug31["👂 Bug 3.1: Stale Heap Priority Key<br><b>Target:</b> src/dijkstra.py (dijkstra_trace)<br><b>Fix:</b> Add if cost > distances[u]: continue"]
+
+    %% Branch 4: Bellman-Ford / DV
+    Start -->|Deep chain V-1 hop destinations fail| Bug22["🛑 Bug 2.2: V-2 Convergence Cut<br><b>Target:</b> src/bellman_ford.py<br><b>Fix:</b> Set max_iterations = len(nodes)"]
+    Start -->|Poison reverse advertises cost 0.0| Bug41["☠️ Bug 4.1: Poison Reverse Horizon Inversion<br><b>Target:</b> src/bellman_ford.py<br><b>Fix:</b> Set advertised_cost = float('inf')"]
+```
+
+---
+
 ### 📊 Bug Difficulty Ranking Table
 
-| Rank | Bug ID & Name | Difficulty Rating | Star Rating |
+#### 🟢 Currently Injected Bugs (7 Active in Project)
+| Bug ID & Name | File Target | Difficulty Rating | Status |
 | :--- | :--- | :--- | :--- |
-| **1** | **2.2 V-2 Convergence Cut** | Easy | ⭐ |
-| **2** | **2.1 Directional Link Mutator** | Easy | ⭐⭐ |
-| **3** | **3.1 Stale Heap Priority Key** | Medium | ⭐⭐⭐ |
-| **4** | **3.2 Floating-Point Imprecision** | Medium-Hard | ⭐⭐⭐⭐ |
-| **5** | **2.3 Mutable State Persistence** | Hard | ⭐⭐⭐⭐⭐ |
+| **Bug 2.2: V-2 Convergence Cut** | `src/bellman_ford.py` | Easy ⭐ | 🔴 Active |
+| **Bug 2.1: Directional Link Mutator** | `src/graph.py` | Easy ⭐⭐ | 🔴 Active |
+| **Bug 3.1: Stale Heap Priority Key** | `src/dijkstra.py` | Medium ⭐⭐⭐ | 🔴 Active |
+| **Bug 4.1: Poison Reverse Horizon Inversion** | `src/bellman_ford.py` | Medium ⭐⭐⭐ | 🔴 Active |
+| **Bug 4.2: Infinite Path Loop Trap** | `src/dijkstra.py` | Medium ⭐⭐⭐ | 🔴 Active |
+| **Bug 3.2: Floating-Point Metric Imprecision** | `src/graph.py` | Medium-Hard ⭐⭐⭐⭐ | 🔴 Active |
+| **Bug 2.3: Mutable State Persistence** | `app.py` | Hard ⭐⭐⭐⭐⭐ | 🔴 Active |
 
 ---
 
@@ -177,6 +204,92 @@ def compute_composite_metric(delay: float, bandwidth: float, precision: int = 6)
     if bandwidth <= 0:
         return float("inf")
     return round(delay + (1.0 / bandwidth), precision)
+```
+
+---
+
+## Tier 4: Bugs AI Should Struggle to Solve (Unimplemented Backlog)
+
+### Bug 4.1: Poison Reverse Horizon Inversion (Bellman-Ford / RIP Protocol) [Difficulty: ⭐⭐⭐ Medium]
+
+- **Target File**: [`src/bellman_ford.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/bellman_ford.py#L104-L107)
+- **Component**: `bellman_ford_distance_vector(graph, split_horizon=True, poison_reverse=True)`
+- **Symptom**:
+  - When `poison_reverse=True`, advertising cost `0.0` back to the next-hop router creates zero-cost routing loops ("black holes") instead of poisoning the route with infinite cost (`inf`).
+  - Distance vector convergence tests fail or produce incorrect zero-weight path metrics.
+- **Failing Tests**:
+  - `tests/test_algorithms.py::test_bellman_ford_poison_reverse` (`AssertionError: Expected poisoned route advertisement to be inf, but got 0.0!`)
+
+#### Root Cause
+In `bellman_ford_distance_vector()`, when `NH[w][v] == u` and `poison_reverse=True`, the advertised cost `advertised_cost_w_to_v` is set to `0.0` instead of `float("inf")`.
+
+#### Why AI Struggles
+AI models see `if poison_reverse:` and assume Poison Reverse is implemented correctly. Setting the poisoned cost to `0.0` syntactically passes checks and doesn't throw runtime exceptions, but causes silent metric inversion and routing loops.
+
+#### Buggy Code (`src/bellman_ford.py`):
+```python
+if NH[w][v] == u:
+    if poison_reverse:
+        # BUG 4.1: Advertises 0.0 metric instead of float("inf")
+        advertised_cost_w_to_v = 0.0
+```
+
+#### Solution Patch:
+```python
+if NH[w][v] == u:
+    if poison_reverse:
+        advertised_cost_w_to_v = float("inf")
+```
+
+---
+
+### Bug 4.2: Infinite Path Loop Trap (Path Reconstruction) [Difficulty: ⭐⭐⭐ Medium]
+
+- **Target File**: [`src/dijkstra.py`](file:///c:/Users/aravi/Downloads/VIT_STUDIES/Comp_Netw/PROJECT_SPRUGA/SPRUGA_CSI/SPRUGA_CSI/src/dijkstra.py#L101-L117)
+- **Component**: `reconstruct_path(source, target, predecessors)`
+- **Symptom**:
+  - If predecessor pointers form a cycle due to corrupt routing tables or link flaps, path reconstruction hangs indefinitely in an infinite `while` loop, causing tests or UI rendering to freeze/hang.
+- **Failing Tests**:
+  - `tests/test_algorithms.py::test_reconstruct_path_circular_loop` (`TimeoutError: reconstruct_path failed to terminate within 1.0s due to infinite predecessor loop!`)
+
+#### Root Cause
+In `reconstruct_path()`, the backwards traversal loop `while curr is not None:` does not track previously visited nodes, hanging indefinitely on circular self-referencing predecessor maps.
+
+#### Why AI Struggles
+AI models look at standard predecessor unwinding code `curr = predecessors.get(curr)` and assume predecessor structures are strictly acyclic DAGs. AI fails to detect missing loop-detection guards during backwards path unwinding.
+
+#### Buggy Code (`src/dijkstra.py`):
+```python
+def reconstruct_path(source: str, target: str, predecessors: Dict[str, Optional[str]]) -> List[str]:
+    path = []
+    curr: Optional[str] = target
+    # BUG 4.2: Omitted visited tracking in predecessor traversal loop
+    while curr is not None:
+        path.append(curr)
+        if curr == source:
+            break
+        curr = predecessors.get(curr)
+```
+
+#### Solution Patch:
+```python
+def reconstruct_path(source: str, target: str, predecessors: Dict[str, Optional[str]]) -> List[str]:
+    if target not in predecessors:
+        return []
+    path = []
+    curr: Optional[str] = target
+    visited: Set[str] = set()
+    while curr is not None and curr not in visited:
+        visited.add(curr)
+        path.append(curr)
+        if curr == source:
+            break
+        curr = predecessors.get(curr)
+
+    if not path or path[-1] != source:
+        return []
+    path.reverse()
+    return path
 ```
 
 ---

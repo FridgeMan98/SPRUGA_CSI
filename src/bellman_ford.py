@@ -77,7 +77,6 @@ def bellman_ford_distance_vector(
         )
     )
 
-    # BUG 2.2: The V-2 Convergence Cut (Truncates Bellman-Ford relaxation loop to V-2 iterations)
     max_iterations = max(1, len(all_nodes) - 2)
     iteration = 1
     has_negative_cycle = False
@@ -103,7 +102,7 @@ def bellman_ford_distance_vector(
                     advertised_cost_w_to_v = D[w][v]
                     if NH[w][v] == u:
                         if poison_reverse:
-                            advertised_cost_w_to_v = float("inf")
+                            advertised_cost_w_to_v = 0.0
                         elif split_horizon:
                             continue
 

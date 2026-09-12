@@ -41,7 +41,6 @@ class Graph:
         self.add_node(v)
         self.adj[u][v] = {"weight": float(weight), "active": active}
         if not self.directed:
-            # BUG 2.1: Reverse path V -> U added with hardcoded cost 0.0 (Directional Link Mutator)
             self.adj[v][u] = {"weight": 0.0, "active": active}
 
     def remove_edge(self, u: str, v: str) -> None:
@@ -129,7 +128,6 @@ def compute_composite_metric(delay: float, bandwidth: float) -> float:
     """Calculate composite link weight metric W = delay + (1 / bandwidth)."""
     if bandwidth <= 0:
         return float("inf")
-    # BUG 3.2: Floating-Point Metric Imprecision (Omitted explicit rounding round(..., 6))
     return delay + (1.0 / bandwidth)
 
 
