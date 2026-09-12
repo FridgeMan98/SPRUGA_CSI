@@ -31,5 +31,5 @@ def test_floating_point_metric_precision():
     """Verify link metric calculation precision under floating point arithmetic."""
     from src.graph import compute_composite_metric
     metric = compute_composite_metric(0.1, 5.0)
-    assert metric == 0.3, f"Expected exact metric 0.3, but got floating-point drift value {metric}!"
+    assert metric == 0.3, f"Expected metric 0.3, but got {metric}!"
 

@@ -80,7 +80,7 @@ def test_bellman_ford_deep_topology_convergence():
 
 
 def test_dijkstra_stale_heap_key():
-    """Verify Dijkstra ignores stale priority queue keys on redundant path graphs."""
+    """Verify Dijkstra priority queue updates on redundant path graphs."""
     g = Graph(directed=True)
     g.add_edge("A", "B", weight=10.0)
     g.add_edge("A", "C", weight=2.0)
@@ -89,7 +89,7 @@ def test_dijkstra_stale_heap_key():
 
     routing_table = dijkstra(g, "A")
     b_row = next(r for r in routing_table if r["Destination"] == "B")
-    assert b_row["Cost"] == 3.0, f"Expected cost 3.0 for router B, but got {b_row['Cost']} due to stale heap entry processing!"
+    assert b_row["Cost"] == 3.0, f"Expected cost 3.0 for router B, but got {b_row['Cost']}!"
 
 
 def test_bellman_ford_poison_reverse():
@@ -103,10 +103,9 @@ def test_bellman_ford_poison_reverse():
 
     # B routes to C via A (cost 7.0, next_hop='A')
     # Under Poison Reverse, B must advertise inf back to A for target C.
-    # Bug 4.1 advertises 0.0, causing A to update its cost to C as 2.0 + 0.0 = 2.0 instead of keeping 5.0.
     D, NH, _, _ = BellmanFordEngine(g).run_distance_vector(poison_reverse=True)
 
-    assert D["A"]["C"] == 5.0, f"Expected cost 5.0 for router A -> C, but got {D['A']['C']} due to poisoned reverse 0.0 metric inversion!"
+    assert D["A"]["C"] == 5.0, f"Expected cost 5.0 for router A -> C, but got {D['A']['C']}!"
 
 
 def _run_reconstruct(q, predecessors):
@@ -118,7 +117,7 @@ def _run_reconstruct(q, predecessors):
 
 
 def test_reconstruct_path_circular_loop():
-    """Verify reconstruct_path hangs on circular predecessor loops (Bug 4.2)."""
+    """Verify reconstruct_path behavior on circular predecessor maps."""
     import multiprocessing
     predecessors = {
         "Target": "Node_A",
@@ -132,7 +131,7 @@ def test_reconstruct_path_circular_loop():
     if p.is_alive():
         p.terminate()
         p.join()
-        pytest.fail("reconstruct_path failed to terminate within 0.3s due to infinite predecessor loop (Bug 4.2 active)!")
+        pytest.fail("reconstruct_path failed to terminate within 0.3s!")
 
 
 

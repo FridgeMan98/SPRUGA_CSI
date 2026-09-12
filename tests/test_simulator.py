@@ -52,5 +52,5 @@ def test_topology_reset_state_isolation():
 
     # Reload preset topology (Reset Topology action)
     g2 = create_sample_mesh()
-    assert g2.is_edge_active("Router_A", "Router_B"), "Resetting topology must return a fresh, unmutated graph!"
+    assert g2.is_edge_active("Router_A", "Router_B")
 
