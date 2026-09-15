@@ -70,6 +70,14 @@ def create_sample_mesh() -> Graph:
 
 
 
+def create_linear_topology() -> Graph:
+    g = Graph(directed=False)
+    nodes = [f"R{i}" for i in range(1, 7)]
+    for i in range(len(nodes) - 1):
+        g.add_edge(nodes[i], nodes[i + 1], weight=1.0)
+    return g
+
+
 def create_ring_topology() -> Graph:
     g = Graph(directed=False)
     nodes = [f"R{i}" for i in range(1, 7)]
@@ -113,12 +121,14 @@ st.sidebar.header("🛠️ Network Settings")
 
 topology_choice = st.sidebar.selectbox(
     "Select Topology Preset",
-    ["Mesh Network (Default)", "Ring Network (6 Routers)", "Star / Hub-and-Spoke", "NSFNET Backbone (14 Nodes)", "Reset Graph"],
+    ["Mesh Network (Default)", "Linear Chain (6 Routers)", "Ring Network (6 Routers)", "Star / Hub-and-Spoke", "NSFNET Backbone (14 Nodes)", "Reset Graph"],
 )
 
 if st.sidebar.button("Load Selected Topology"):
     if topology_choice in ["Mesh Network (Default)", "Reset Graph"]:
         st.session_state.graph = create_sample_mesh()
+    elif topology_choice == "Linear Chain (6 Routers)":
+        st.session_state.graph = create_linear_topology()
     elif topology_choice == "Ring Network (6 Routers)":
         st.session_state.graph = create_ring_topology()
     elif topology_choice == "Star / Hub-and-Spoke":
