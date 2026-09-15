@@ -110,9 +110,24 @@ def create_nsfnet_topology() -> Graph:
     return g
 
 
+def load_topology_preset(choice: str) -> Graph:
+    if choice == "Linear Chain (6 Routers)":
+        return create_linear_topology()
+    elif choice == "Ring Network (6 Routers)":
+        return create_ring_topology()
+    elif choice == "Star / Hub-and-Spoke":
+        return create_star_topology()
+    elif choice == "NSFNET Backbone (14 Nodes)":
+        return create_nsfnet_topology()
+    else:
+        return create_sample_mesh()
+
+
 # --- Session State Initialization ---
 if "graph" not in st.session_state:
     st.session_state.graph = create_sample_mesh()
+if "current_preset" not in st.session_state:
+    st.session_state.current_preset = "Mesh Network (Default)"
 if "event_history" not in st.session_state:
     st.session_state.event_history = []
 
@@ -124,19 +139,10 @@ topology_choice = st.sidebar.selectbox(
     ["Mesh Network (Default)", "Linear Chain (6 Routers)", "Ring Network (6 Routers)", "Star / Hub-and-Spoke", "NSFNET Backbone (14 Nodes)", "Reset Graph"],
 )
 
-if st.sidebar.button("Load Selected Topology"):
-    if topology_choice in ["Mesh Network (Default)", "Reset Graph"]:
-        st.session_state.graph = create_sample_mesh()
-    elif topology_choice == "Linear Chain (6 Routers)":
-        st.session_state.graph = create_linear_topology()
-    elif topology_choice == "Ring Network (6 Routers)":
-        st.session_state.graph = create_ring_topology()
-    elif topology_choice == "Star / Hub-and-Spoke":
-        st.session_state.graph = create_star_topology()
-    elif topology_choice == "NSFNET Backbone (14 Nodes)":
-        st.session_state.graph = create_nsfnet_topology()
+if topology_choice != st.session_state.current_preset or st.sidebar.button("Load Selected Topology"):
+    st.session_state.graph = load_topology_preset(topology_choice)
+    st.session_state.current_preset = topology_choice if topology_choice != "Reset Graph" else "Mesh Network (Default)"
     st.session_state.event_history = []
-    st.rerun()
 
 st.sidebar.markdown("---")
 st.sidebar.header("⚙️ Algorithm Configuration")
